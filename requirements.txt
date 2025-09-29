@@ -1,7 +1,7 @@
 streamlit
 openai
 langdetect
-googletrans==3.1.0a0
+deep-translator
 Pillow
 pytesseract
 gtts
