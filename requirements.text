@@ -1,7 +1,0 @@
-streamlit
-openai
-langdetect
-googletrans==4.0.0-rc1
-Pillow
-pytesseract
-gtts
