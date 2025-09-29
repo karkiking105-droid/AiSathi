@@ -1,22 +1,20 @@
 import streamlit as st
 import openai
 from langdetect import detect
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 from PIL import Image
 import pytesseract
 from gtts import gTTS
+import os
 
 # 🔐 OpenAI API Key
 openai.api_key = "YOUR_OPENAI_API_KEY"  # Replace with your actual key
-
-# 🌐 Translator
-translator = Translator()
 
 # 🎨 Branding
 st.set_page_config(page_title="AiSathi 🇳🇵", layout="centered")
 st.title("🤖 AiSathi™")
 st.caption("Made in Nepal, Loved Worldwide 🌏")
-st.write("Namaste Gopal! Your app is now live 🎉")
+st.write("Namaste Gopal! Your app is now fully powered 🎉")
 
 # 🛡️ Ethical Filter
 def is_safe(text):
@@ -37,14 +35,24 @@ tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
 
 # 💬 Chat Tab
 with tab1:
-    user_input = st.text_area("Ask anything:")
+    mode = st.radio("Reply mode:", ["💬 Chat only", "🔊 Voice only", "💬 + 🔊 Both"])
+    user_input = st.text_area("Ask AiSathi anything:")
     if st.button("Send", key="chat"):
         if is_safe(user_input):
             lang = detect(user_input)
-            translated = translator.translate(user_input, src=lang, dest='en').text
+            translated = GoogleTranslator(source='auto', target='en').translate(user_input)
             reply = get_ai_reply(translated)
-            final = translator.translate(reply, src='en', dest=lang).text
-            st.write("🤖", final)
+            final = GoogleTranslator(source='en', target=lang).translate(reply)
+
+            if mode in ["💬 Chat only", "💬 + 🔊 Both"]:
+                st.write("🤖", final)
+
+            if mode in ["🔊 Voice only", "💬 + 🔊 Both"]:
+                tts = gTTS(text=final, lang=lang)
+                tts.save("voice.mp3")
+                audio_file = open("voice.mp3", "rb")
+                st.audio(audio_file.read(), format="audio/mp3")
+                os.remove("voice.mp3")
         else:
             st.warning("❌ Unsafe or blocked content.")
 
@@ -54,10 +62,10 @@ with tab2:
     if st.button("Solve", key="homework"):
         if is_safe(hw_question):
             lang = detect(hw_question)
-            translated = translator.translate(hw_question, src=lang, dest='en').text
+            translated = GoogleTranslator(source='auto', target='en').translate(hw_question)
             prompt = f"Help solve this homework:\n{translated}"
             reply = get_ai_reply(prompt)
-            final = translator.translate(reply, src='en', dest=lang).text
+            final = GoogleTranslator(source='en', target=lang).translate(reply)
             st.write("📚", final)
         else:
             st.warning("❌ Unsafe question.")
@@ -68,7 +76,7 @@ with tab3:
     if st.button("Generate Code", key="code"):
         if is_safe(code_task):
             lang = detect(code_task)
-            translated = translator.translate(code_task, src=lang, dest='en').text
+            translated = GoogleTranslator(source='auto', target='en').translate(code_task)
             prompt = f"Write code for:\n{translated}"
             reply = get_ai_reply(prompt, model="gpt-4")
             st.code(reply, language="python")
@@ -98,12 +106,12 @@ with tab5:
         tts.save("voice.mp3")
         audio_file = open("voice.mp3", "rb")
         st.audio(audio_file.read(), format="audio/mp3")
+        os.remove("voice.mp3")
 
 # 🌐 Translate Tab
 with tab6:
     text_to_translate = st.text_area("Enter text to translate:")
     target_lang = st.selectbox("Choose target language", ["en", "ne", "hi", "fr", "es", "zh-cn", "ja", "ko", "ar"])
     if st.button("Translate", key="translate"):
-        detected_lang = detect(text_to_translate)
-        translated = translator.translate(text_to_translate, src=detected_lang, dest=target_lang)
-        st.write("🌐 Translated Text:", translated.text)
+        translated = GoogleTranslator(source='auto', target=target_lang).translate(text_to_translate)
+        st.write("🌐 Translated Text:", translated)
