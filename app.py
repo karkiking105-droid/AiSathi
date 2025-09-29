@@ -1,7 +1,7 @@
 import streamlit as st
 import openai
 from langdetect import detect
-from deep_translator import GoogleTranslator
+from googletrans import Translator
 from PIL import Image
 import pytesseract
 from gtts import gTTS
@@ -9,8 +9,9 @@ import os
 
 # 🔐 OpenAI API Key
 openai.api_key = "YOUR_OPENAI_API_KEY"  # Replace with your actual key
+translator = Translator()
 
-# 🎨 Branding
+# 🎨 Page Setup
 st.set_page_config(page_title="AiSathi 🇳🇵", layout="centered")
 st.title("🤖 AiSathi™")
 st.caption("Made in Nepal, Loved Worldwide 🌏")
@@ -22,9 +23,9 @@ def is_safe(text):
     return not any(word in text.lower() for word in banned)
 
 # 🤖 AI Response
-def get_ai_reply(prompt, model="gpt-3.5-turbo"):
+def get_ai_reply(prompt):
     return openai.ChatCompletion.create(
-        model=model,
+        model="gpt-3.5-turbo",
         messages=[{"role": "user", "content": prompt}]
     ).choices[0].message.content
 
@@ -40,9 +41,9 @@ with tab1:
     if st.button("Send", key="chat"):
         if is_safe(user_input):
             lang = detect(user_input)
-            translated = GoogleTranslator(source='auto', target='en').translate(user_input)
+            translated = translator.translate(user_input, src=lang, dest='en').text
             reply = get_ai_reply(translated)
-            final = GoogleTranslator(source='en', target=lang).translate(reply)
+            final = translator.translate(reply, src='en', dest=lang).text
 
             if mode in ["💬 Chat only", "💬 + 🔊 Both"]:
                 st.write("🤖", final)
@@ -62,10 +63,10 @@ with tab2:
     if st.button("Solve", key="homework"):
         if is_safe(hw_question):
             lang = detect(hw_question)
-            translated = GoogleTranslator(source='auto', target='en').translate(hw_question)
+            translated = translator.translate(hw_question, src=lang, dest='en').text
             prompt = f"Help solve this homework:\n{translated}"
             reply = get_ai_reply(prompt)
-            final = GoogleTranslator(source='en', target=lang).translate(reply)
+            final = translator.translate(reply, src='en', dest=lang).text
             st.write("📚", final)
         else:
             st.warning("❌ Unsafe question.")
@@ -76,9 +77,9 @@ with tab3:
     if st.button("Generate Code", key="code"):
         if is_safe(code_task):
             lang = detect(code_task)
-            translated = GoogleTranslator(source='auto', target='en').translate(code_task)
+            translated = translator.translate(code_task, src=lang, dest='en').text
             prompt = f"Write code for:\n{translated}"
-            reply = get_ai_reply(prompt, model="gpt-4")
+            reply = get_ai_reply(prompt)
             st.code(reply, language="python")
         else:
             st.warning("❌ Unsafe code request.")
@@ -89,7 +90,7 @@ with tab4:
     if uploaded_file:
         st.image(uploaded_file, caption="Uploaded Image", use_column_width=True)
         image = Image.open(uploaded_file)
-        pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Adjust path if needed
+        pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'  # Adjust path if needed
         extracted_text = pytesseract.image_to_string(image)
         st.write("📖 Extracted Text:", extracted_text)
         if st.button("Solve from photo"):
@@ -113,5 +114,6 @@ with tab6:
     text_to_translate = st.text_area("Enter text to translate:")
     target_lang = st.selectbox("Choose target language", ["en", "ne", "hi", "fr", "es", "zh-cn", "ja", "ko", "ar"])
     if st.button("Translate", key="translate"):
-        translated = GoogleTranslator(source='auto', target=target_lang).translate(text_to_translate)
+        detected_lang = detect(text_to_translate)
+        translated = translator.translate(text_to_translate, src=detected_lang, dest=target_lang).text
         st.write("🌐 Translated Text:", translated)
